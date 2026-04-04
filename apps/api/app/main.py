@@ -7,5 +7,5 @@ app = FastAPI(title=settings.app_name)
 async def info():
     return {
         "app_name": settings.app_name,
-        "version": 1.00
+        "version": 1.00,
     }
