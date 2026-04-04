@@ -29,7 +29,7 @@ class JWTService:
             "exp": now + expires_delta
         }
 
-        return jwt.encode(payload, self.algorithm)
+        return jwt.encode(payload, self.secret_key, self.algorithm)
     
     def create_access_token(self, sub: str) -> str:
         data = TokenData(sub=sub, type="access")
