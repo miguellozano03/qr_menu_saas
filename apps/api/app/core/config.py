@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     db_driver_sync: str = "psycopg2"
     
     db_user: str
-    db_password: str
+    db_password: str 
     db_host: str
     db_port: int
     db_name: str
@@ -28,26 +28,26 @@ class Settings(BaseSettings):
     refresh_token_expire_days: int = 7
     algorithm: str = "HS256"
 
-    def _build_url(self, driver: str) -> str:
+    def _build_url(self, driver: str) -> URL:
         "Makes a database url template."
-        return str(URL.create(
+        return URL.create(
             drivername=f'{self.db_motor}+{driver}',
             username=self.db_user,
             password=self.db_password,
             host=self.db_host,
             port=self.db_port,
             database=self.db_name
-        ))
-    
+        )
+
     @property
-    def db_url_async(self) -> str:
-        "Get an async database url"
+    def db_url_async(self) -> URL:
+        "Returns an async database url"
         return self._build_url(self.db_driver_async)
     
     @property
-    def db_url_sync(self) -> str:
-        "Get a sync database url"
+    def db_url_sync(self) -> URL:
+        "Returns a sync database url"
         return self._build_url(self.db_driver_sync)
-    
+
 
 settings = Settings() # pyright: ignore[reportCallIssue]
