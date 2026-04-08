@@ -25,4 +25,4 @@ class Argon2Hasher(IPasswordService):
             return False
 
 argon2_engine = PasswordHasher()
-service = Argon2Hasher(argon2_engine)
+password_service = Argon2Hasher(argon2_engine)
