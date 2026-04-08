@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, UTC
 from pydantic import BaseModel
 import jwt
@@ -13,7 +14,30 @@ class TokenPayload(BaseModel):
     iat: datetime
     exp: datetime
 
-class JWTService:
+class IJWTService(ABC):
+
+    @abstractmethod
+    def create_access_token(self, sub: str) -> str:
+        pass
+
+    @abstractmethod
+    def create_refresh_token(self, sub: str) -> str:
+        pass
+
+    @abstractmethod
+    def decode_token(self, token: str):
+        pass
+
+    @abstractmethod
+    def verify_access_token(self, token: str):
+        pass
+
+    @abstractmethod
+    def verify_refresh_token(self, token: str):
+        pass
+ 
+
+class JWTService(IJWTService):
     def __init__(self) -> None:
         self.secret_key = settings.secret_key
         self.algorithm = settings.algorithm
@@ -25,11 +49,11 @@ class JWTService:
         payload = {
             "sub": data.sub,
             "type": data.type,
-            "iat": now,
-            "exp": now + expires_delta
+            "iat": int(now.timestamp()),
+            "exp": int((now + expires_delta).timestamp())
         }
 
-        return jwt.encode(payload, self.secret_key, self.algorithm)
+        return jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
     
     def create_access_token(self, sub: str) -> str:
         data = TokenData(sub=sub, type="access")
@@ -52,13 +76,13 @@ class JWTService:
         token_data = self.decode_token(token)
         if token_data.type != "access":
             raise ValueError("An access Token was expected")
-        return token_data.model_dump()
+        return token_data
     
     def verify_refresh_token(self, token: str):
         token_data = self.decode_token(token)
         if token_data.type != "refresh":
             raise ValueError("An refresh Token was expected")
-        return token_data.model_dump()
+        return token_data
     
 
 jwt_service = JWTService()
