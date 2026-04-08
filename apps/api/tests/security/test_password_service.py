@@ -3,7 +3,7 @@ from argon2 import PasswordHasher
 from app.core.security.password_service import Argon2Hasher
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def hasher_service():
     engine = PasswordHasher(time_cost=1, memory_cost=8, parallelism=1)
     return Argon2Hasher(engine)
