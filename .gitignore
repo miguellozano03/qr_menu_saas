@@ -172,3 +172,5 @@ web/.yarn/*
 # Docusaurus
 .docusaurus
 .cache-loader
+
+notes.txt
