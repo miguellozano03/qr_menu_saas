@@ -7,11 +7,11 @@ from app.modules.users.schemas import UserUpdate
 class IUserRepository(ABC):
 
     @abstractmethod
-    async def get_user_by_id(self, user_id: int):
+    async def get_user_by_id(self, user_id: int) -> User | None:
         pass
 
     @abstractmethod
-    async def get_user_by_email(self, email: str):
+    async def get_user_by_email(self, email: str)  -> User | None:
         pass
 
     @abstractmethod

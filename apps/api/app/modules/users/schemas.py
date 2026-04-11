@@ -29,7 +29,7 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = Field(default=None, max_length=255)
     password: Optional[str] = Field(default=None, min_length=8, max_length=255)
 
-    @field_validator("password")
+    @field_validator("password", mode='before')
     @classmethod
     def validate_password(cls, value: str | None):
         if value is None:
@@ -40,7 +40,7 @@ class UserUpdate(BaseModel):
         if not any(char.isupper() for char in value):
             raise ValueError("Must have at least one uppercase letter.")
         if not any(char.isdigit() for char in value):
-            raise ValueError("Must have at least one number letter.")
+            raise ValueError("Must have at least one digit.")
 
         return value
     
