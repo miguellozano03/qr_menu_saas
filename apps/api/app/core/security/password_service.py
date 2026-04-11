@@ -8,7 +8,7 @@ class IPasswordService(ABC):
         pass
     
     @abstractmethod
-    def verify(self, password_plain: str, hashed: str) -> bool:
+    def verify(self, password_plain: str, stored_value: str) -> bool:
         pass
 
 class Argon2Hasher(IPasswordService):

@@ -25,15 +25,15 @@ class IJWTService(ABC):
         pass
 
     @abstractmethod
-    def decode_token(self, token: str):
+    def decode_token(self, token: str) -> TokenPayload:
         pass
 
     @abstractmethod
-    def verify_access_token(self, token: str):
+    def verify_access_token(self, token: str) -> TokenPayload:
         pass
 
     @abstractmethod
-    def verify_refresh_token(self, token: str):
+    def verify_refresh_token(self, token: str) -> TokenPayload:
         pass
  
 
