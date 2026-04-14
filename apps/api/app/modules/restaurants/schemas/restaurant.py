@@ -1,6 +1,7 @@
 from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
+
 class RestaurantBase(BaseModel):
     name: str = Field(min_length=1, max_length=100, description="Restaurant Name")
     description: str | None = Field(default=None, min_length=1, max_length=500, description="Restaurant Description")
