@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ResourceNotFoundException
+from app.core.security.password_service import password_service
 from app.modules.users.repository import UserRepository
 from app.modules.users.schemas import UserRead, UserUpdate
 
@@ -22,9 +23,15 @@ class UserService:
         if not user:
             raise ResourceNotFoundException("User not found")
         
-        updated = await self._repo.update(user, data)
-        await self._session.commit()
+        update_data = data.model_dump(exclude_unset=True, exclude_none=True)
+        if "password" in update_data:
+            update_data["hashed_password"] = password_service.hash(update_data.pop("password"))
         
+        updated = await self._repo.update(user, update_data)
+        await self._session.commit()
+
+        print(updated.email, updated.id, updated.created_at)
+        print(updated.__dict__)
         return UserRead.model_validate(updated)
         
     async def me(self, user_id: int) -> UserRead:

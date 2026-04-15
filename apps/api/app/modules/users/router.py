@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -102,17 +102,17 @@ async def me(current_user: UserRead = Depends(get_current_user)):
     description="Update the information of an authenticated user",
 )
 async def update_account(data: UserUpdate, current_user: UserRead = Depends(get_current_user), service: UserService = Depends(get_user_service)):
-    await service.update_user(current_user.id, data)
+    return await service.update_user(current_user.id, data)
 
 @user_router.delete(
-    "/delete_account",
+    "/me",
     summary="Delete an account(user) of the platform.",
     description="Delete an authenticated user from the system.",
     responses={
-        401: {"description": "Not authenticated"},
         401: {"description": "Not authenticated"},
         404: {"description": "User not found"},
     }
 )
 async def delete_account(current_user: UserRead = Depends(get_current_user), service: UserService = Depends(get_user_service)):
     await service.delete_account(current_user.id)
+    return Response(status_code=204)

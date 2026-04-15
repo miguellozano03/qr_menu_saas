@@ -1,45 +1,16 @@
 import re
 import unicodedata
-from abc import ABC, abstractmethod
-from typing import Sequence
-
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.exceptions import ResourceNotFoundException
-from app.modules.restaurants.schemas import (
+from sqlalchemy.exc import IntegrityError
+from app.core.exceptions import ResourceNotFoundException, IsDuplicatedException
+from app.modules.restaurants.schemas.restaurant import (
     RestaurantRead,
     RestaurantCreate,
-    RestaurantUpdate,
+    RestaurantUpdate
 )
 from app.modules.restaurants.repositories.restaurant import IRestaurantRepository
 from app.modules.restaurants.models import Restaurant
 
-
-class IRestaurantService(ABC):
-
-    @abstractmethod
-    async def get_all(self, user_id: int, limit: int = 10, offset: int = 0) -> Sequence[RestaurantRead]:
-        pass
-
-    @abstractmethod
-    async def get_by_id(self, restaurant_id: int, user_id: int) -> RestaurantRead:
-        pass
-
-    @abstractmethod
-    async def get_by_slug(self, slug: str, user_id: int) -> RestaurantRead:
-        pass
-
-    @abstractmethod
-    async def create(self, data: RestaurantCreate, owner_id: int) -> RestaurantRead:
-        pass
-
-    @abstractmethod
-    async def update(self, restaurant_id: int, user_id: int, data: RestaurantUpdate) -> RestaurantRead:
-        pass
-
-    @abstractmethod
-    async def delete(self, restaurant_id: int, user_id: int) -> None:
-        pass
 
 def _slugify(text: str) -> str:
     text = unicodedata.normalize("NFKD", text)
@@ -50,79 +21,89 @@ def _slugify(text: str) -> str:
     text = re.sub(r"^-+|-+$", "", text)
     return text
 
-class RestaurantService(IRestaurantService):
-    def __init__(self, repo: IRestaurantRepository, session: AsyncSession, ) -> None:
+
+class RestaurantService:
+
+    def __init__(self, repo: IRestaurantRepository, session: AsyncSession):
         self._repo = repo
         self._session = session
 
-    async def get_all(self, user_id: int, limit: int = 10, offset: int = 0) -> Sequence[RestaurantRead]:
-        restaurants = await self._repo.get_all(user_id, limit, offset)
-        return [RestaurantRead.model_validate(restaurant) for restaurant in restaurants]
-    
-    async def get_by_id(self, restaurant_id: int, user_id: int) -> RestaurantRead:
-        restaurant = self._repo.get_by_id(restaurant_id, user_id)
+    async def _get_owned(self, restaurant_id: int, user_id: int) -> Restaurant:
+        restaurant = await self._repo.get_by_id(restaurant_id)
 
-        if not restaurant:
+        if restaurant is None or restaurant.owner_id != user_id:
             raise ResourceNotFoundException("Restaurant not found")
-        
-        return RestaurantRead.model_validate(restaurant)
-    
-    async def get_by_slug(self, slug: str, user_id: int) -> RestaurantRead:
-        restaurant = self._repo.get_by_slug(slug, user_id)
 
-        if not restaurant:
+        return restaurant
+
+    async def get_all(self, user_id: int, limit: int = 10, offset: int = 0):
+        restaurants = await self._repo.get_all(limit, offset)
+
+        return [
+            RestaurantRead.model_validate(r)
+            for r in restaurants
+            if r.owner_id == user_id
+        ]
+
+    async def get_by_id(self, restaurant_id: int, user_id: int):
+        restaurant = await self._get_owned(restaurant_id, user_id)
+        return RestaurantRead.model_validate(restaurant)
+
+    async def get_by_slug(self, slug: str, user_id: int):
+        restaurant = await self._repo.get_by_slug(slug)
+
+        if restaurant is None or restaurant.owner_id != user_id:
             raise ResourceNotFoundException("Restaurant not found")
-                
+
         return RestaurantRead.model_validate(restaurant)
 
-    async def _generate_unique_slug(self, name: str, user_id: int) -> str:
-        base_slug = _slugify(name)
-        slug = base_slug
-        counter = 2
-
-        while await self._repo.get_by_slug(slug=slug, user_id=user_id):
-            slug = f"{base_slug}-{counter}"
-            counter += 1
-
-        return slug
-    
-    async def create(self, data: RestaurantCreate, owner_id: int):
-        slug = await self._generate_unique_slug(data.name, owner_id)
+    async def create(self, data: RestaurantCreate, user_id: int):
+        slug = await self._generate_unique_slug(data.name)
 
         restaurant = Restaurant(
-            owner_id = owner_id,
-            slug = slug,
-            name = data.name,
-            description = data.name,
-            logo_url = str(data.logo_url) if data.logo_url else None,
-            settings= data.settings
+            owner_id=user_id,
+            slug=slug,
+            name=data.name,
+            description=data.description,
+            logo_url=str(data.logo_url) if data.logo_url else None,
+            settings=data.settings,
         )
-        restaurant = await self._repo.create(restaurant)
-        return RestaurantRead.model_validate(restaurant)
-    
-    async def update(self, restaurant_id: int, user_id: int, data: RestaurantUpdate) -> RestaurantRead:
+        
+        try:
+            created = await self._repo.create(restaurant)
+            await self._session.commit()
+        except IntegrityError:
+            await self._session.rollback()
+            raise IsDuplicatedException("Slug already exists")
+
+        return RestaurantRead.model_validate(created)
+
+    async def update(self, restaurant_id: int, user_id: int, data: RestaurantUpdate):
+        restaurant = await self._get_owned(restaurant_id, user_id)
 
         payload = data.model_dump(exclude_unset=True)
 
-        restaurant = await self._repo.get_by_id(restaurant_id, user_id)
+        if "name" in payload and payload["name"] != restaurant.name:
+            payload["slug"] = await self._generate_unique_slug(payload["name"])
 
-        if not restaurant:
-            raise ResourceNotFoundException("Restaurant not found")
-        
-        new_name = payload.get("name")
-        
+        updated = await self._repo.update(restaurant, payload)
+        await self._session.commit()
 
-        if new_name and new_name != restaurant.name:
-            payload["slug"] = await self._generate_unique_slug(new_name, user_id)
+        return RestaurantRead.model_validate(updated)
 
-        restaurant = await self._repo.update(restaurant, payload)
+    async def delete(self, restaurant_id: int, user_id: int):
+        restaurant = await self._get_owned(restaurant_id, user_id)
 
-        return RestaurantRead.model_validate(restaurant)
-    
-    async def delete(self, restaurant_id, user_id: int):
-        restaurant = await self._repo.get_by_id(restaurant_id, user_id)
-
-        if not restaurant:
-            raise ResourceNotFoundException("Restaurant not found")
-        
         await self._repo.delete(restaurant)
+        await self._session.commit()
+
+    async def _generate_unique_slug(self, name: str) -> str:
+        base = _slugify(name)
+        slug = base
+        counter = 2
+
+        while await self._repo.get_by_slug(slug):
+            slug = f"{base}-{counter}"
+            counter += 1
+
+        return slug
