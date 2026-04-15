@@ -15,4 +15,4 @@ class User(TimestampMixin, Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    restaurants: Mapped[list["Restaurant"]] = relationship("Restaurant", back_populates="owner")
+    restaurants: Mapped[list["Restaurant"]] = relationship("Restaurant", back_populates="owner", cascade="all, delete-orphan")

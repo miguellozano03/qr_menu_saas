@@ -57,6 +57,7 @@ class RestaurantLinkRepository(IRestaurantLinkRepository):
 
     async def create(self, link: RestaurantLink, restaurant_id: int):
         link.restaurant_id = restaurant_id
+
         self._session.add(link)
         await self._session.flush()
         await self._session.refresh(link)

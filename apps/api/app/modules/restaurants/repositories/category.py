@@ -34,11 +34,11 @@ class CategoryRepository(ICategoryRepository):
     async def get_all(self, restaurant_id: int, limit: int, offset: int) -> Sequence[Category]:
         stmt = (
             select(Category)
-            .join(Restaurant, Category.restaurant_id == Restaurant.id)
-            .where(Restaurant.id == restaurant_id)
-            .offset(offset)
+            .where(Category.restaurant_id == restaurant_id)
+            .where(Category.deleted_at.is_(None))
             .order_by(Category.position)
             .limit(limit)
+            .offset(offset)
         )
         
         result = await self._session.execute(stmt)
@@ -47,26 +47,15 @@ class CategoryRepository(ICategoryRepository):
     async def get_by_id(self, category_id: int, restaurant_id: int) -> Category | None:
         stmt = (
             select(Category)
-            .join(Restaurant, Category.restaurant_id == Restaurant.id)
             .where(Category.id == category_id)
-            .where(Restaurant.id == restaurant_id)
+            .where(Category.restaurant_id == restaurant_id)
+            .where(Category.deleted_at.is_(None))
         )
         result = await self._session.execute(stmt)
         
         return result.scalar_one_or_none()
     
     async def create(self, category: Category) -> Category:
-        stmt = (
-            select(Restaurant)
-            .where(Restaurant.id == category.restaurant_id)
-        )
-
-        result = await self._session.execute(stmt)
-        restaurant = result.scalar_one_or_none()
-
-        if not restaurant:
-            raise ResourceNotFoundException("Restaurant not found or not allowed")
-
         self._session.add(category)
         await self._session.flush()
         await self._session.refresh(category)

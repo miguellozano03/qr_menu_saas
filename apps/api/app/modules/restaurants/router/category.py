@@ -15,32 +15,27 @@ router = APIRouter(
     tags=["Categories"],
 )
 
-# =========================
-# 🔓 PUBLIC
-# =========================
 
-# @router.get("", response_model=List[CategoryRead])
-# async def get_categories_public(
-#     restaurant_id: int,
-#     limit: int = 10,
-#     offset: int = 0,
-#     service: CategoryService = Depends(get_category_service),
-# ):
-#     return await service.get_all_public(restaurant_id, limit, offset)
+@router.get("", response_model=List[CategoryRead])
+async def get_categories(
+    restaurant_id: int,
+    user_id: int = Depends(get_current_user_id),
+    limit: int = 10,
+    offset: int = 0,
+    service: CategoryService = Depends(get_category_service),
+):
+    return await service.get_all(restaurant_id, user_id, limit, offset)
 
 
-# @router.get("/{category_id}", response_model=CategoryRead)
-# async def get_category_public(
-#     restaurant_id: int,
-#     category_id: int,
-#     service: CategoryService = Depends(get_category_service),
-# ):
-#     return await service.get_by_id_public(category_id, restaurant_id)
+@router.get("/{category_id}", response_model=CategoryRead)
+async def get_category(
+    restaurant_id: int,
+    category_id: int,
+    user_id: int = Depends(get_current_user_id),
+    service: CategoryService = Depends(get_category_service),
+):
+    return await service.get_by_id(category_id, restaurant_id, user_id)
 
-
-# =========================
-# 🔒 PRIVATE
-# =========================
 
 @router.post("", response_model=CategoryRead)
 async def create_category(

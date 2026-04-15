@@ -13,16 +13,15 @@ from app.modules.restaurants.dependencies import get_restaurant_service
 router = APIRouter(prefix="/restaurants", tags=["Restaurants"])
 
 
-# ---------- PUBLIC ----------
 @router.get("/{slug}", response_model=RestaurantRead)
 async def get_public(
     slug: str,
+    current_user_id: int = Depends(get_current_user_id),
     service: RestaurantService = Depends(get_restaurant_service),
 ):
-    return await service.get_public_by_slug(slug)
+    return await service.get_by_slug(slug, current_user_id)
 
 
-# ---------- PRIVATE ----------
 @router.get("")
 async def get_all(
     limit: int = 10,
@@ -30,7 +29,7 @@ async def get_all(
     current_user_id: int = Depends(get_current_user_id),
     service: RestaurantService = Depends(get_restaurant_service),
 ):
-    return await service.get_all(limit, offset)
+    return await service.get_all(current_user_id, limit, offset)
 
 
 @router.post("", response_model=RestaurantRead)

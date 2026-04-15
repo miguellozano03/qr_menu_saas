@@ -16,32 +16,26 @@ router = APIRouter(
     tags=["Products"],
 )
 
-# =========================
-# 🔓 PUBLIC
-# =========================
 
-# @router.get("", response_model=List[ProductRead])
-# async def get_products_public(
-#     restaurant_id: int,
-#     limit: int = 10,
-#     offset: int = 0,
-#     service: ProductService = Depends(get_product_service),
-# ):
-#     return await service.get_all_public(restaurant_id, limit, offset)
+@router.get("", response_model=List[ProductRead])
+async def get_products(
+    restaurant_id: int,
+    user_id: int = Depends(get_current_user_id),
+    limit: int = 10,
+    offset: int = 0,
+    service: ProductService = Depends(get_product_service),
+):
+    return await service.get_all(restaurant_id, user_id, limit, offset)
 
 
-# @router.get("/{product_id}", response_model=ProductRead)
-# async def get_product_public(
-#     restaurant_id: int,
-#     product_id: int,
-#     service: ProductService = Depends(get_product_service),
-# ):
-#     return await service.get_by_id_public(product_id, restaurant_id)
-
-
-# =========================
-# 🔒 PRIVATE
-# =========================
+@router.get("/{product_id}", response_model=ProductRead)
+async def get_product(
+    restaurant_id: int,
+    product_id: int,
+    user_id: int = Depends(get_current_user_id),
+    service: ProductService = Depends(get_product_service),
+):
+    return await service.get_by_id(product_id, restaurant_id, user_id)
 
 @router.post("", response_model=ProductRead)
 async def create_product(

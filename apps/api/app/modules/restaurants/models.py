@@ -18,17 +18,17 @@ class Restaurant(TimestampMixin, Base):
     )
         
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True, nullable=False)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete='CASCADE'), index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     slug: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     logo_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
     settings: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
-    owner: Mapped["User"] = relationship("User", back_populates="restaurants")
-    links: Mapped[list["RestaurantLink"]] = relationship("RestaurantLink", back_populates="restaurant")
-    categories: Mapped[list["Category"]] = relationship("Category", back_populates="restaurant")
-    products: Mapped[list["Product"]] = relationship("Product", back_populates="restaurant")
+    owner: Mapped["User"] = relationship("User", back_populates="restaurants",  passive_deletes=True)
+    links: Mapped[list["RestaurantLink"]] = relationship("RestaurantLink", back_populates="restaurant",  passive_deletes=True)
+    categories: Mapped[list["Category"]] = relationship("Category", back_populates="restaurant",  passive_deletes=True)
+    products: Mapped[list["Product"]] = relationship("Product", back_populates="restaurant",  passive_deletes=True)
 
 
 class RestaurantLink(TimestampMixin, Base):
@@ -39,12 +39,12 @@ class RestaurantLink(TimestampMixin, Base):
         
     
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    restaurant_id: Mapped[int] = mapped_column(ForeignKey("restaurants.id"), index=True, nullable=False)
+    restaurant_id: Mapped[int] = mapped_column(ForeignKey("restaurants.id", ondelete='CASCADE'), index=True, nullable=False)
     type: Mapped[LinkType | None] = mapped_column(SAEnum(LinkType), nullable=True)
     url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     position: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
-    restaurant: Mapped["Restaurant"] = relationship("Restaurant", back_populates="links")
+    restaurant: Mapped["Restaurant"] = relationship("Restaurant", back_populates="links", passive_deletes=True)
 
 class Category(TimestampMixin, Base):
     __tablename__ = "categories"
@@ -53,12 +53,12 @@ class Category(TimestampMixin, Base):
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    restaurant_id: Mapped[int] = mapped_column(ForeignKey("restaurants.id"), index=True, nullable=False)
+    restaurant_id: Mapped[int] = mapped_column(ForeignKey("restaurants.id", ondelete="CASCADE"), index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     position: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
-    restaurant: Mapped["Restaurant"] = relationship("Restaurant", back_populates="categories")
-    products: Mapped[list["Product"]] = relationship("Product", back_populates="category")
+    restaurant: Mapped["Restaurant"] = relationship("Restaurant", back_populates="categories", passive_deletes=True)
+    products: Mapped[list["Product"]] = relationship("Product", back_populates="category",  passive_deletes=True)
 
 class Product(TimestampMixin, Base):
     __tablename__ = "products"
@@ -70,8 +70,8 @@ class Product(TimestampMixin, Base):
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    restaurant_id: Mapped[int] = mapped_column(ForeignKey("restaurants.id"), index=True, nullable=False)
-    category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"), index=True, nullable=False)
+    restaurant_id: Mapped[int] = mapped_column(ForeignKey("restaurants.id", ondelete="CASCADE"), index=True, nullable=False)
+    category_id: Mapped[int] = mapped_column(ForeignKey("categories.id", ondelete="CASCADE"), index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     price: Mapped[Decimal] = mapped_column(Numeric(10,2), nullable=False)
@@ -80,5 +80,5 @@ class Product(TimestampMixin, Base):
     position: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
 
-    restaurant: Mapped["Restaurant"] = relationship("Restaurant", back_populates="products")
+    restaurant: Mapped["Restaurant"] = relationship("Restaurant", back_populates="products", passive_deletes=True)
     category: Mapped["Category"] = relationship("Category", back_populates="products")

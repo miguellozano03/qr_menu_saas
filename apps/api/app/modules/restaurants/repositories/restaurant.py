@@ -41,6 +41,7 @@ class RestaurantRepository(IRestaurantRepository):
         stmt = (
             select(Restaurant)
             .order_by(Restaurant.created_at.desc())
+            .where(Restaurant.deleted_at.is_(None))
             .limit(limit)
             .offset(offset)
         )
@@ -48,12 +49,22 @@ class RestaurantRepository(IRestaurantRepository):
         return result.scalars().all()
 
     async def get_by_id(self, restaurant_id: int):
-        stmt = select(Restaurant).where(Restaurant.id == restaurant_id)
+        stmt = (
+            select(Restaurant)
+            .where(Restaurant.id == restaurant_id)
+            .where(Restaurant.deleted_at.is_(None))
+        )
+        
         result = await self._session.execute(stmt)
         return result.scalar_one_or_none()
 
     async def get_by_slug(self, slug: str):
-        stmt = select(Restaurant).where(Restaurant.slug == slug)
+        stmt =(
+            select(Restaurant)
+            .where(Restaurant.slug == slug)
+            .where(Restaurant.deleted_at.is_(None))
+        )
+        
         result = await self._session.execute(stmt)
         return result.scalar_one_or_none()
 

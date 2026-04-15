@@ -4,8 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db.database import get_db
 from app.modules.restaurants.repositories.restaurant import RestaurantRepository
 from app.modules.restaurants.services.restaurant import RestaurantService
-from app.modules.restaurants.repositories.restaurant_link import RestaurantLinkRepository
-from app.modules.restaurants.services.restaurant_link import RestaurantLinkService
+from app.modules.restaurants.repositories.link import RestaurantLinkRepository
+from app.modules.restaurants.services.link import RestaurantLinkService
 from app.modules.restaurants.repositories.category import CategoryRepository
 from app.modules.restaurants.services.category import CategoryService
 from app.modules.restaurants.repositories.product import ProductRepository

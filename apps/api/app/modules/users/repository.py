@@ -19,7 +19,7 @@ class IUserRepository(ABC):
         pass
 
     @abstractmethod
-    async def update(self, user: User, data: UserUpdate) -> User:
+    async def update(self, user: User, data: dict) -> User:
         pass
 
     @abstractmethod
@@ -47,9 +47,12 @@ class UserRepository(IUserRepository):
         await self.session.refresh(user)
         return user
     
-    async def update(self, user: User, data: UserUpdate) -> User:
-        for field, value in data.model_dump(exclude_unset=True).items():
-            setattr(user, field, value)
+    async def update(self, user: User, data: dict) -> User:
+        allowed_fields = {"email", "hashed_password"}
+        
+        for field, value in data.items():
+            if field in allowed_fields:
+                setattr(user, field, value)
 
         await self.session.flush()
         await self.session.refresh(user)
