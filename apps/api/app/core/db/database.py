@@ -1,23 +1,19 @@
 from typing import AsyncGenerator
-from sqlalchemy import create_engine, URL
+import ssl
+from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from app.core.config import settings
 
-def _make_url(driver: str) -> URL:
-    return URL.create(
-        drivername=f"{settings.db_motor}+{driver}",
-        username=settings.db_user,
-        password=settings.db_password,
-        host=settings.db_host,
-        port=settings.db_port,
-        database=settings.db_name,
-    )
+ssl_context = ssl.create_default_context()
 
-# --- Async (para la app) ---
+# --- Async (App) ---
 async_engine = create_async_engine(
-    _make_url(settings.db_driver_async),
+    settings.db_url,
     echo=False,
     pool_pre_ping=True,
+    pool_size=5,
+    max_overflow=10,
+    connect_args={"ssl": ssl_context},
 )
 
 AsyncSessionLocal = async_sessionmaker(
@@ -34,9 +30,12 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.rollback()
             raise
 
-# --- Sync (para Alembic) ---
+# --- Sync (Alembic) ---
+sync_db_url = settings.db_url.replace("+asyncpg", "")
+
 sync_engine = create_engine(
-    _make_url(settings.db_driver_sync),
+    sync_db_url,
     echo=False,
     pool_pre_ping=True,
+    connect_args={"sslmode": "require"}
 )
