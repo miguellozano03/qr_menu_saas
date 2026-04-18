@@ -174,3 +174,4 @@ web/.yarn/*
 .cache-loader
 
 example.txt
+uploads/
