@@ -14,9 +14,20 @@ def register_exceptions_handlers(app: FastAPI):
         
     @app.exception_handler(IntegrityError)
     async def integrity_error_handler(request: Request, exc: IntegrityError):
+        orig = str(exc.orig)
+
+        if "foreign key" in orig.lower():
+            message = "One or more referenced resources do not exist"
+        elif "unique" in orig.lower():
+            message = "Resource already exists"
+        elif "not null" in orig.lower():
+            message = "Missing required fields"
+        else:
+            message = "Database constraint violation"
+        
         return JSONResponse(
             status_code=409,
-            content={"error": "Database constraint violation"}
+            content={"error": message}
         )
 
     @app.exception_handler(Exception)
