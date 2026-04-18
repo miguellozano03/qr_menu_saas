@@ -6,10 +6,10 @@ from app.core.db.database import get_db
 from app.core.security.password_service import password_service
 from app.core.security.jwt_service import jwt_service
 from app.core.exceptions import UnauthorizedException, ResourceNotFoundException
-from app.modules.users.schemas import TokenResponse, LoginData, RegisterResponse, UserCreate, UserRead, UserUpdate
+from app.modules.users.schemas import TokenResponse, LoginData, RegisterResponse, UserCreate, UserRead, UserUpdate, RefreshRequest
 from app.modules.users.services.auth_service import AuthService
 from app.modules.users.services.user_service import UserService
-from app.modules.users.repository import UserRepository
+from app.modules.users.repository import UserRepository, TokenRepository
 
 auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
 user_router = APIRouter(prefix="/users", tags=["Users"])
@@ -24,6 +24,7 @@ bearer_scheme = HTTPBearer()
 async def get_auth_service(session: AsyncSession = Depends(get_db)) -> AuthService:
     return AuthService(
         repo=UserRepository(session),
+        token_repo=TokenRepository(session),
         session=session,
         password_service=password_service,
         jwt_service=jwt_service
@@ -115,4 +116,21 @@ async def update_account(data: UserUpdate, current_user: UserRead = Depends(get_
 )
 async def delete_account(current_user: UserRead = Depends(get_current_user), service: UserService = Depends(get_user_service)):
     await service.delete_account(current_user.id)
+    return Response(status_code=204)
+
+
+@auth_router.post("/refresh", response_model=TokenResponse)
+async def refresh(data: RefreshRequest, service: AuthService = Depends(get_auth_service)):
+    return await service.refresh(data.refresh_token)
+
+@auth_router.post("/logout", status_code=204)
+async def logout(
+    data: RefreshRequest,
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    service: AuthService = Depends(get_auth_service),
+):
+    await service.logout(
+        access_token=credentials.credentials,
+        refresh_token=data.refresh_token,
+    )
     return Response(status_code=204)

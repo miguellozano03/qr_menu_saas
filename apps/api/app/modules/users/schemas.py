@@ -59,3 +59,6 @@ class RegisterResponse(BaseModel):
 class LoginData(BaseModel):
     email: EmailStr
     password: str
+    
+class RefreshRequest(BaseModel):
+    refresh_token: str
