@@ -10,12 +10,14 @@ from app.modules.restaurants.repositories.category import CategoryRepository
 from app.modules.restaurants.services.category import CategoryService
 from app.modules.restaurants.repositories.product import ProductRepository
 from app.modules.restaurants.services.product import ProductService
+from app.shared.storage.dependencies import get_restaurant_storage, get_product_storage
 
 
 async def get_restaurant_service(session: AsyncSession = Depends(get_db)):
     return RestaurantService(
         repo=RestaurantRepository(session),
-        session=session   
+        session=session,
+        storage=get_restaurant_storage()
     )
     
 async def get_links_service(session: AsyncSession = Depends(get_db)):
@@ -33,5 +35,6 @@ async def get_category_service(session: AsyncSession = Depends(get_db)):
 async def get_product_service(session: AsyncSession = Depends(get_db)):
     return ProductService(
         repo=ProductRepository(session),
-        session=session
+        session=session,
+        storage=get_product_storage()
     )

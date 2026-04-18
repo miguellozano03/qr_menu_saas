@@ -1,5 +1,6 @@
-from typing import List
-from fastapi import APIRouter, Depends
+import json
+from fastapi import APIRouter, Depends, UploadFile, File, Form
+from app.core.exceptions import InvalidFile
 from app.shared.dependencies.auth import get_current_user_id
 from app.modules.restaurants.services.restaurant import RestaurantService
 from app.modules.restaurants.schemas.restaurant import (
@@ -32,29 +33,46 @@ async def get_all(
     return await service.get_all(current_user_id, limit, offset)
 
 
-@router.post("", response_model=RestaurantRead)
+@router.post("/", response_model=RestaurantRead)
 async def create(
-    data: RestaurantCreate,
+    name: str = Form(...),
+    description: str | None = Form(None),
+    settings: str | None = Form(None),
+    logo_file: UploadFile | None = File(None),
     current_user_id: int = Depends(get_current_user_id),
     service: RestaurantService = Depends(get_restaurant_service),
 ):
-    return await service.create(data, current_user_id)
+    try:
+        parsed_settings = json.loads(settings) if settings else None
+    except json.JSONDecodeError:
+        raise InvalidFile("Settings must be a valid json")
+
+    data = RestaurantCreate(
+        name=name,
+        description=description,
+        settings=parsed_settings,
+    )
+    return await service.create(data, current_user_id, logo_file)
 
 
 @router.patch("/{restaurant_id}", response_model=RestaurantRead)
 async def update(
     restaurant_id: int,
-    data: RestaurantUpdate,
+    name: str | None = Form(None),
+    description: str | None = Form(None),
+    settings: str | None = Form(None),
+    logo_file: UploadFile | None = File(None),
     current_user_id: int = Depends(get_current_user_id),
     service: RestaurantService = Depends(get_restaurant_service),
 ):
-    return await service.update(restaurant_id, current_user_id, data)
+    try:
+        parsed_settings = json.loads(settings) if settings else None
+    except json.JSONDecodeError:
+        raise InvalidFile("Settings must be a valid json")
 
-
-@router.delete("/{restaurant_id}")
-async def delete(
-    restaurant_id: int,
-    current_user_id: int = Depends(get_current_user_id),
-    service: RestaurantService = Depends(get_restaurant_service),
-):
-    return await service.delete(restaurant_id, current_user_id)
+    data = RestaurantUpdate(
+        name=name,
+        description=description,
+        settings=parsed_settings,
+    )
+    return await service.update(restaurant_id, current_user_id, data, logo_file)
