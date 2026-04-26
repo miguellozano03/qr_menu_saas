@@ -128,3 +128,18 @@
     @apply font-sans;
   }
 }
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari y Opera */
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE y Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+}
+
+.paper-texture {
+  background-color: #fdfcf8;
+  background-image: url("https://www.transparenttextures.com/patterns/cream-paper.png");
+}

@@ -1,6 +1,6 @@
 from decimal import Decimal
 from typing import Any
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 from app.shared.enums import LinkType
 
 class PublicLinkRead(BaseModel):
@@ -18,11 +18,16 @@ class PublicProductRead(BaseModel):
     price: Decimal
     image_url: str | None
     is_available: bool
-    position: int | None
+    position: int | None    
+    
+    @field_serializer("price")
+    def serialize_price(self, value: Decimal):
+        return float(value)
     
     model_config = ConfigDict(from_attributes=True)
     
 class PublicCategoryRead(BaseModel):
+    id: int
     name: str
     position: int | None = None
     products: list[PublicProductRead]
@@ -34,13 +39,13 @@ class PublicRestaurantProfile(BaseModel):
     description: str | None
     logo_url: str | None
     slug: str
-    links: list[PublicLinkRead] = []
+    links: list[PublicLinkRead] = Field(default_factory=list)
     
     model_config = ConfigDict(from_attributes=True)
     
 class PublicMenuRead(BaseModel):
     name: str
     logo_url: str | None
-    categories: list[PublicCategoryRead] = []
+    categories: list[PublicCategoryRead] = Field(default_factory=list)
     
     model_config = ConfigDict(from_attributes=True)
