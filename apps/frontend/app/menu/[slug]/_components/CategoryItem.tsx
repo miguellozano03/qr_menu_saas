@@ -15,11 +15,11 @@ export const CategoryItem = ({
       onClick={onClick}
       className={`
         px-6 py-2 w-32 shrink-0 
-        text-sm rounded-2xl font-bold transition-all duration-200 
+        text-sm rounded-sm font-bold transition-all duration-200 cursor-pointer 
         ${
           !isActive
-            ? "bg-gray-100 border-zinc-200/60 text-gray-500 hover:bg-gray-200"
-            : "bg-white border-red-500 text-red-500 shadow-sm scale-105"
+            ? "bg-zinc-800 border border-zinc-700 text-zinc-200 hover:border-zinc-500 hover:text-white"
+            : "bg-white text-zinc-950 shadow-sm scale-105"
         }
       `}
     >

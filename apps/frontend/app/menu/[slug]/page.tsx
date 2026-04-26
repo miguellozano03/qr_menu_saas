@@ -19,7 +19,7 @@ async function getMenu(slug: string) {
   };
 }
 
-const USE_MOCK = true;
+const USE_MOCK = process.env.USE_MOCK;
 
 export default async function Menu({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
