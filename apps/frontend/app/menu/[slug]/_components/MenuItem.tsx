@@ -17,7 +17,7 @@ export const MenuItem = ({
       </div>
       <div className="h-32 w-32 shrink-0">
         <img
-          src={image_url}
+          src={image_url ?? undefined}
           alt="Artículo"
           className="w-full h-full object-cover p-3 rounded-2xl"
         />
