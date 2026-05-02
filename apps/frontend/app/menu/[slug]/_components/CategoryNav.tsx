@@ -18,10 +18,13 @@ interface CategoryNavProps {
 
 export const CategoryNav = ({ categories, activeCategory, onSelect }: CategoryNavProps) => {
   return (
-    <Carousel opts={{ dragFree: true }}>
-      <CarouselContent className="gap-10">
+    <Carousel opts={{ dragFree: true }} className="w-full px-1">
+      <CarouselContent className="-ml-2">
         {categories?.map((category) => (
-          <CarouselItem key={category.id} className="pl-2 basis-1/4 md:basis-1/6 ">
+          <CarouselItem
+            key={category.id}
+            className="pl-2 basis-1/3 sm:basis-1/4 md:basis-1/6"
+          >
             <CategoryItem
               text={category.name}
               isActive={activeCategory === category.id}
@@ -30,8 +33,9 @@ export const CategoryNav = ({ categories, activeCategory, onSelect }: CategoryNa
           </CarouselItem>
         ))}
       </CarouselContent>
-      <CarouselPrevious />
-      <CarouselNext />
+      {/* Flechas solo en desktop — en mobile el drag es suficiente */}
+      <CarouselPrevious className="hidden md:flex" />
+      <CarouselNext className="hidden md:flex" />
     </Carousel>
   );
 };
